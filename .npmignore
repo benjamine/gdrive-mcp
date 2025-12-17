@@ -1,0 +1,24 @@
+# Development files
+*.backup
+.DS_Store
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
+
+# Build tools
+biome.jsonc
+tsconfig.json
+
+# Documentation (already in files array)
+*.md
+!README.md
+
+# Test files
+test-*.ts
+*.test.ts
+
+# CI/CD
+.github

@@ -274,8 +274,8 @@ async function main() {
     console.log("   {");
     console.log('     "mcpServers": {');
     console.log('       "gdrive": {');
-    console.log('         "command": "bun",');
-    console.log(`         "args": ["${process.cwd()}/index.ts"]`);
+    console.log('         "command": "bunx",');
+    console.log('         "args": ["--bun", "gdrive-mcp"]');
     console.log("       }");
     console.log("     }");
     console.log("   }\n");

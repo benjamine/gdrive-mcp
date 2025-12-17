@@ -1,17 +1,46 @@
 {
   "name": "gdrive-mcp",
   "version": "1.0.0",
-  "description": "MCP server for Google Drive access",
+  "description": "MCP server for Google Drive access with secure OAuth2 authentication",
   "license": "MIT",
+  "author": "Benjamin Eidelman <beneidel@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benjamine/gdrive-mcp.git"
+  },
+  "homepage": "https://github.com/benjamine/gdrive-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/benjamine/gdrive-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "google-drive",
+    "google-docs",
+    "oauth2",
+    "ai",
+    "claude"
+  ],
+  "main": "src/index.ts",
   "module": "src/index.ts",
   "type": "module",
-  "private": false,
+  "bin": {
+    "gdrive-mcp": "src/index.ts",
+    "gdrive-mcp-auth": "src/setup-auth.ts"
+  },
+  "files": [
+    "src",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "bun run src/index.ts",
     "auth": "bun run src/setup-auth.ts",
     "check": "biome check .",
     "format": "biome format --write .",
-    "lint": "biome check --write ."
+    "lint": "biome check --write .",
+    "prepublishOnly": "bun run check"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
@@ -26,5 +55,8 @@
     "jsonpath-plus": "^10.3.0",
     "zod": "^4.1.13",
     "zod-to-json-schema": "^3.25.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
   }
 }

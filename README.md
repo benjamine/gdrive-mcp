@@ -13,13 +13,23 @@ A Model Context Protocol (MCP) server that provides access to Google Drive docum
 - **update_doc_note**: Update the text of an existing note by its number
 - **remove_doc_note**: Remove a note from the document by its number
 
-## Quick Start
+## Installation
 
-### 1. Install Dependencies
+No installation needed! Use `bunx` to run directly, or clone from source.
+
+### Option 1: Use with bunx (Recommended)
+
+No installation required - `bunx` will download and cache the package automatically.
+
+### Option 2: Clone from Source
 
 ```bash
+git clone https://github.com/benjamine/gdrive-mcp.git
+cd gdrive-mcp
 bun install
 ```
+
+## Quick Start
 
 ### 2. Create Google OAuth2 Credentials
 
@@ -37,6 +47,12 @@ You need to create your own OAuth2 credentials from Google Cloud Console.
 
 The setup script will open your browser and handle the OAuth2 flow:
 
+**With bunx (recommended):**
+```bash
+bunx --bun gdrive-mcp-auth YOUR_CLIENT_ID YOUR_CLIENT_SECRET
+```
+
+**If cloned from source:**
 ```bash
 bun run src/setup-auth.ts YOUR_CLIENT_ID YOUR_CLIENT_SECRET
 ```
@@ -44,8 +60,8 @@ bun run src/setup-auth.ts YOUR_CLIENT_ID YOUR_CLIENT_SECRET
 This will:
 1. ✅ Open your browser for Google authorization
 2. ✅ Handle the OAuth2 callback automatically  
-3. ✅ Display your configuration ready to copy
-4. ✅ Give you everything needed for Claude Desktop
+3. ✅ Securely store credentials in your system keychain
+4. ✅ Display configuration ready to copy
 
 **Example output:**
 ```
@@ -58,8 +74,8 @@ Add this to your Claude Desktop config:
 {
   "mcpServers": {
     "gdrive": {
-      "command": "bun",
-      "args": ["/path/to/gdrive-mcp/index.ts"]
+      "command": "bunx",
+      "args": ["--bun", "gdrive-mcp"]
     }
   }
 }
@@ -77,12 +93,25 @@ Add the server to your MCP client configuration.
 
 Add to your `opencode.jsonc`:
 
+**With bunx (recommended):**
 ```json
 {
   "mcp": {
     "gdrive": {
       "type": "local",
-      "command": ["bun", "run", "/absolute/path/to/gdrive-mcp/index.ts"]
+      "command": ["bunx", "--bun", "gdrive-mcp"]
+    }
+  }
+}
+```
+
+**If cloned from source:**
+```json
+{
+  "mcp": {
+    "gdrive": {
+      "type": "local",
+      "command": ["bun", "run", "/absolute/path/to/gdrive-mcp/src/index.ts"]
     }
   }
 }
@@ -94,12 +123,25 @@ Add to your Claude Desktop configuration:
 
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
+**With bunx (recommended):**
+```json
+{
+  "mcpServers": {
+    "gdrive": {
+      "command": "bunx",
+      "args": ["--bun", "gdrive-mcp"]
+    }
+  }
+}
+```
+
+**If cloned from source:**
 ```json
 {
   "mcpServers": {
     "gdrive": {
       "command": "bun",
-      "args": ["run", "/absolute/path/to/gdrive-mcp/index.ts"]
+      "args": ["run", "/absolute/path/to/gdrive-mcp/src/index.ts"]
     }
   }
 }
@@ -225,17 +267,13 @@ Removes a note from the document by its number. This completely deletes the note
 
 ### Testing the Server
 
-You can test the server directly:
+After running the OAuth setup, you can test the server directly:
 
 ```bash
-# Set environment variables
-export GOOGLE_CLIENT_ID="your_client_id"
-export GOOGLE_CLIENT_SECRET="your_client_secret"
-export GOOGLE_REFRESH_TOKEN="your_refresh_token"
-
-# Run the server
-bun run index.ts
+bunx --bun gdrive-mcp
 ```
+
+The server will load credentials from your system keychain automatically.
 
 ## Troubleshooting
 
