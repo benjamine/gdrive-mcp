@@ -1,6 +1,6 @@
 {
   "name": "gdrive-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for Google Drive access with secure OAuth2 authentication",
   "license": "MIT",
   "author": "Benjamin Eidelman <beneidel@gmail.com>",
