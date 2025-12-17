@@ -63,7 +63,7 @@
 
 ```bash
 # Test auth setup (bunx downloads and runs automatically)
-bunx --bun gdrive-mcp-auth YOUR_CLIENT_ID YOUR_CLIENT_SECRET
+bunx --bun -p gdrive-mcp gdrive-mcp-auth YOUR_CLIENT_ID YOUR_CLIENT_SECRET
 
 # Test server
 bunx --bun gdrive-mcp

@@ -49,7 +49,7 @@ The setup script will open your browser and handle the OAuth2 flow:
 
 **With bunx (recommended):**
 ```bash
-bunx --bun gdrive-mcp-auth YOUR_CLIENT_ID YOUR_CLIENT_SECRET
+bunx --bun -p gdrive-mcp gdrive-mcp-auth YOUR_CLIENT_ID YOUR_CLIENT_SECRET
 ```
 
 **If cloned from source:**
