@@ -6,7 +6,7 @@
   "author": "Benjamin Eidelman <beneidel@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/benjamine/gdrive-mcp.git"
+    "url": "git+https://github.com/benjamine/gdrive-mcp.git"
   },
   "homepage": "https://github.com/benjamine/gdrive-mcp#readme",
   "bugs": {
