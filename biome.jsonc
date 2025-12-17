@@ -1,0 +1,93 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "domains": {},
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": {
+          "level": "error",
+          // remove unused imports on save, it's safe enough for us
+          "fix": "safe"
+        },
+        "noUnusedVariables": {
+          "level": "error",
+          "options": {
+            "ignoreRestSiblings": true
+          }
+        },
+        "useHookAtTopLevel": "error",
+        "useUniqueElementIds": "off"
+      },
+      "style": {
+        "useCollapsedElseIf": "error",
+        "useForOf": "error",
+        "useComponentExportOnlyModules": "off",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "posthog-js/react": {
+                "importNames": ["useFeatureFlagEnabled"],
+                "message": "Please use 'useAppFeatureFlagEnabled' instead"
+              }
+            }
+          }
+        },
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": {
+            "requireAscii": true,
+            "filenameCases": ["kebab-case"]
+          }
+        }
+      },
+      "suspicious": {
+        "noEmptyBlockStatements": "error"
+      },
+      "complexity": {
+        "noForEach": "error"
+      }
+    }
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
+  "files": {
+    "includes": ["**", "!**/node_modules", "!**/bun.lock", "!**/dist"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "css": {
+    "parser": {
+      "cssModules": false,
+      "tailwindDirectives": true
+    }
+  },
+  "overrides": [{}]
+}

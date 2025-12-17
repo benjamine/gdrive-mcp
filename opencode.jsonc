@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "gdrive": {
+      "type": "local",
+      "command": ["bun", "start"],
+      "enabled": true
+    }
+  }
+}
