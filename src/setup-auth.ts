@@ -11,7 +11,7 @@ const execAsync = promisify(exec);
 // Default OAuth2 credentials for gdrive-mcp
 // These are shared credentials - users are encouraged to create their own for better reliability
 const DEFAULT_CLIENT_ID =
-  "532676558209-9qhpu7jnl0s6vr9i6cq4k0i1pjs0vg7k.apps.googleusercontent.com";
+  "621120243678-2ru6qeassnfkrilan1evlq7ernqchbe4.apps.googleusercontent.com";
 const DEFAULT_CLIENT_SECRET = "GOCSPX-YourSecretHere"; // TODO: Replace with actual secret
 
 const SCOPES = [

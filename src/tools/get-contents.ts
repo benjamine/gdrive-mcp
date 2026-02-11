@@ -3,21 +3,29 @@ import type { docs_v1 } from "googleapis";
 import { google } from "googleapis";
 import { z } from "zod";
 
+type DocumentType = "document" | "spreadsheet";
+
 export const tool = {
-  name: "gdrive_get_doc_contents",
+  name: "gdrive_get_contents",
   description:
-    "Get the contents of a Google Doc in different formats. Supports markdown (default, preserves structure like headings, lists, tables, formatting) or JSON (full document structure).",
+    "Get the contents of a Google Doc or Spreadsheet in different formats. Supports markdown (default, preserves structure like headings, lists, tables, formatting for docs; creates table for sheets) or JSON (full document/spreadsheet structure).",
   inputSchema: z.object({
     doc_id_or_url: z
       .string()
       .describe(
-        "Google Docs URL (e.g., https://docs.google.com/document/d/...) or document ID",
+        "Google Docs or Sheets URL (e.g., https://docs.google.com/document/d/... or https://docs.google.com/spreadsheets/d/...) or document/spreadsheet ID",
       ),
     format: z
       .enum(["markdown", "json"])
       .default("markdown")
       .describe(
         "Output format: 'markdown' (default) for formatted text with structure, 'json' for full document structure",
+      ),
+    range: z
+      .string()
+      .optional()
+      .describe(
+        "For spreadsheets only: Cell range to fetch (e.g., 'A1:D10', 'Sheet2!A:Z'). Defaults to the first sheet.",
       ),
   }),
   annotations: {
@@ -30,10 +38,10 @@ export const handler = async (
   args: z.infer<typeof tool.inputSchema>,
   auth: OAuth2Client,
 ) => {
-  const { doc_id_or_url, format } = args;
+  const { doc_id_or_url, format, range } = args;
 
   try {
-    const contents = await getDocContents(auth, doc_id_or_url, format);
+    const contents = await getContents(auth, doc_id_or_url, format, range);
     return {
       content: [
         {
@@ -58,16 +66,77 @@ export const handler = async (
   }
 };
 
-const getDocContents = async (
+const getContents = async (
   auth: OAuth2Client,
   docIdOrUrl: string,
   format: "markdown" | "json",
+  range?: string,
 ): Promise<string> => {
-  const docId = extractDocId(docIdOrUrl);
-  if (!docId) {
-    throw new Error("Invalid document ID or URL");
+  // Detect document type and extract ID
+  const { id, type } = await detectDocumentType(auth, docIdOrUrl);
+
+  if (type === "document") {
+    return getDocContents(auth, id, format);
+  } else if (type === "spreadsheet") {
+    return getSheetContents(auth, id, format, range);
+  } else {
+    throw new Error("Unsupported document type");
+  }
+};
+
+const detectDocumentType = async (
+  auth: OAuth2Client,
+  input: string,
+): Promise<{ id: string; type: DocumentType }> => {
+  // Try to extract from URL patterns first
+  const docUrlMatch = input.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+  if (docUrlMatch) {
+    const id = docUrlMatch[1];
+    if (!id) throw new Error("Invalid document URL");
+    return { id, type: "document" };
   }
 
+  const sheetUrlMatch = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (sheetUrlMatch) {
+    const id = sheetUrlMatch[1];
+    if (!id) throw new Error("Invalid spreadsheet URL");
+    return { id, type: "spreadsheet" };
+  }
+
+  // If it looks like an ID, use Drive API to determine type
+  if (/^[a-zA-Z0-9-_]+$/.test(input)) {
+    const drive = google.drive({ version: "v3", auth });
+
+    try {
+      const response = await drive.files.get({
+        fileId: input,
+        fields: "mimeType",
+      });
+
+      const mimeType = response.data.mimeType;
+      if (mimeType === "application/vnd.google-apps.document") {
+        return { id: input, type: "document" };
+      } else if (mimeType === "application/vnd.google-apps.spreadsheet") {
+        return { id: input, type: "spreadsheet" };
+      } else {
+        throw new Error(`Unsupported file type: ${mimeType}`);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to detect file type: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  throw new Error("Invalid document ID or URL");
+};
+
+const getDocContents = async (
+  auth: OAuth2Client,
+  docId: string,
+  format: "markdown" | "json",
+): Promise<string> => {
   const docs = google.docs({ version: "v1", auth });
 
   try {
@@ -84,7 +153,7 @@ const getDocContents = async (
       return JSON.stringify(doc, null, 2);
     }
 
-    return convertToMarkdown(doc);
+    return convertDocToMarkdown(doc);
   } catch (error: unknown) {
     if (error instanceof Error) {
       throw new Error(`Failed to get document: ${error.message}`);
@@ -93,7 +162,105 @@ const getDocContents = async (
   }
 };
 
-function convertToMarkdown(doc: docs_v1.Schema$Document): string {
+const getSheetContents = async (
+  auth: OAuth2Client,
+  spreadsheetId: string,
+  format: "markdown" | "json",
+  range?: string,
+): Promise<string> => {
+  const sheets = google.sheets({ version: "v4", auth });
+
+  try {
+    // If no range specified, get the first sheet name
+    let finalRange = range;
+    if (!finalRange) {
+      const metadataResponse = await sheets.spreadsheets.get({
+        spreadsheetId,
+        fields: "sheets.properties.title",
+      });
+
+      const firstSheet = metadataResponse.data.sheets?.[0]?.properties?.title;
+      finalRange = firstSheet || "Sheet1";
+    }
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: finalRange,
+    });
+
+    const values = response.data.values || [];
+    const actualRange = response.data.range || finalRange;
+
+    if (format === "json") {
+      return JSON.stringify(
+        {
+          spreadsheetId,
+          range: actualRange,
+          values,
+        },
+        null,
+        2,
+      );
+    }
+
+    return convertSheetToMarkdown(values);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to get spreadsheet: ${error.message}`);
+    }
+    throw error;
+  }
+};
+
+const convertSheetToMarkdown = (values: string[][]): string => {
+  if (values.length === 0) {
+    return "*(empty spreadsheet)*";
+  }
+
+  // Find the maximum number of columns
+  const maxCols = Math.max(...values.map((row) => row.length));
+
+  // Normalize rows to have the same number of columns
+  const normalizedRows = values.map((row) => {
+    const normalized = [...row];
+    while (normalized.length < maxCols) {
+      normalized.push("");
+    }
+    return normalized;
+  });
+
+  let markdown = "";
+
+  // Add header row
+  if (normalizedRows.length > 0) {
+    const headerRow = normalizedRows[0];
+    if (headerRow) {
+      markdown += `| ${headerRow.map((cell) => cell || " ").join(" | ")} |\n`;
+      markdown += `| ${headerRow.map(() => "---").join(" | ")} |\n`;
+    }
+  }
+
+  // Add data rows
+  for (let i = 1; i < normalizedRows.length; i++) {
+    const row = normalizedRows[i];
+    if (row) {
+      markdown += `| ${row.map((cell) => cell || " ").join(" | ")} |\n`;
+    }
+  }
+
+  // Add data rows
+  for (let i = 1; i < normalizedRows.length; i++) {
+    const row = normalizedRows[i];
+    if (row) {
+      markdown += `| ${row.map((cell) => cell || " ").join(" | ")} |\n`;
+    }
+  }
+
+  return markdown;
+};
+
+// Keep the existing doc conversion functions
+function convertDocToMarkdown(doc: docs_v1.Schema$Document): string {
   if (!doc.body?.content) return "";
 
   let markdown = "";
@@ -252,19 +419,4 @@ function processTable(table: docs_v1.Schema$Table): string {
 
   markdown += "\n";
   return markdown;
-}
-
-function extractDocId(input: string): string | null {
-  // Try to extract document ID from URL
-  const urlMatch = input.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
-  if (urlMatch) {
-    return urlMatch[1] ?? null;
-  }
-
-  // If it's not a URL, assume it's already a document ID
-  if (/^[a-zA-Z0-9-_]+$/.test(input)) {
-    return input;
-  }
-
-  return null;
 }

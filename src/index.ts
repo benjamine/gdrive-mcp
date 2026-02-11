@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
 import * as createComment from "./tools/create-comment.js";
-import * as getDocContents from "./tools/get-doc-contents.js";
+import * as getContents from "./tools/get-contents.js";
 import * as insertNote from "./tools/insert-note.js";
 import * as listComments from "./tools/list-comments.js";
 import * as removeNote from "./tools/remove-note.js";
@@ -50,13 +50,13 @@ const createAuth = async (): Promise<OAuth2Client> => {
 const registerTools = (mcpServer: McpServer, auth: OAuth2Client) => {
   // Register each tool with Zod schema support
   mcpServer.registerTool(
-    getDocContents.tool.name,
+    getContents.tool.name,
     {
-      description: getDocContents.tool.description,
-      inputSchema: getDocContents.tool.inputSchema,
-      annotations: getDocContents.tool.annotations,
+      description: getContents.tool.description,
+      inputSchema: getContents.tool.inputSchema,
+      annotations: getContents.tool.annotations,
     },
-    async (args) => getDocContents.handler(args, auth),
+    async (args) => getContents.handler(args, auth),
   );
 
   mcpServer.registerTool(
